@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMP vs FTE Cost Calculator — NEFF TSI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      background: #f5f4f0;
+      color: #1a1a1a;
+      padding: 2rem 1rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 0.5px solid #d8d5ce;
+      padding: 2rem 2.5rem;
+    }
+
+    .header { margin-bottom: 1.75rem; }
+    .header h1 { font-size: 20px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+    .header p  { font-size: 13px; color: #6b7280; }
+
+    .sliders {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem 2.5rem;
+      margin-bottom: 1.75rem;
+    }
+    .slider-row label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+    .slider-row .val  { font-size: 18px; font-weight: 500; color: #1a1a1a; margin-bottom: 6px; }
+    input[type=range] {
+      width: 100%; height: 4px; cursor: pointer;
+      accent-color: #2c5f2d;
+    }
+    .tick-row { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-top: 3px; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .metric {
+      background: #f5f4f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .metric .mlabel { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+    .metric .mval   { font-size: 22px; font-weight: 500; color: #1a1a1a; }
+    .metric .msub   { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+    .banner {
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      margin-bottom: 1.75rem;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: fixed;
+    }
+    colgroup col:nth-child(1) { width: 22%; }
+    colgroup col:nth-child(2) { width: 15%; }
+    colgroup col:nth-child(3) { width: 16%; }
+    colgroup col:nth-child(4) { width: 31%; }
+    colgroup col:nth-child(5) { width: 16%; }
+    th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 11px;
+      color: #6b7280;
+      padding: 6px 10px;
+      border-bottom: 0.5px solid #e5e2da;
+    }
+    td {
+      padding: 9px 10px;
+      border-bottom: 0.5px solid #e5e2da;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    .hl  { font-weight: 500; }
+    .win { color: #3b6d11; }
+    .dim { color: #9ca3af; }
+
+    .hidden-costs {
+      margin-top: 1.75rem;
+      border-top: 0.5px solid #e5e2da;
+      padding-top: 1.25rem;
+    }
+    .hc-title { font-size: 12px; font-weight: 500; color: #6b7280; margin-bottom: 10px; }
+    .hc-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+    .hc-item  {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 0.5px solid #e5e2da;
+      font-size: 12px;
+      color: #1a1a1a;
+    }
+    .hc-item:last-child { border-bottom: none; }
+    .hc-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #a32d2d;
+      margin-top: 5px; flex-shrink: 0;
+    }
+    .hc-note {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 1rem;
+      padding: 8px 12px;
+      background: #fdf3f3;
+      border-radius: 6px;
+      border-left: 3px solid #e24b4a;
+    }
+
+    .footnote { margin-top: 1.25rem; font-size: 11px; color: #9ca3af; }
+
+    @media (max-width: 600px) {
+      .container { padding: 1.25rem; }
+      .sliders, .metrics, .hc-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>AMP vs FTE cost calculator</h1>
+    <p>NEFF TSI program — compare USDA AMP cost share (30% NEFF) against hiring a full-time TSI Field Specialist</p>
+  </div>
+
+  <div class="sliders">
+    <div class="slider-row">
+      <label>Contractor rate (AMP program)</label>
+      <div class="val" id="rateVal">$650/ac</div>
+      <input type="range" min="400" max="900" step="25" value="650" id="rateSlider">
+      <div class="tick-row"><span>$400</span><span>$900</span></div>
+    </div>
+    <div class="slider-row">
+      <label>FTE acres treated per year</label>
+      <div class="val" id="acVal">450 ac/yr</div>
+      <input type="range" min="200" max="600" step="10" value="450" id="acSlider">
+      <div class="tick-row"><span>200</span><span>600</span></div>
+    </div>
+  </div>
+
+  <div class="metrics" id="metrics"></div>
+  <div class="banner" id="banner"></div>
+
+  <div class="section-label">Cost per acre — all three options</div>
+  <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+
+  <div class="section-label">Full breakdown</div>
+  <table>
+    <colgroup><col><col><col><col><col></colgroup>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Cost/ac to NEFF</th>
+        <th>Annual total</th>
+        <th>Constraints</th>
+        <th>vs FTE</th>
+      </tr>
+    </thead>
+    <tbody id="tblBody"></tbody>
+  </table>
+
+  <div class="hidden-costs">
+    <div class="hc-title">AMP hidden costs — not included above, unquantified but real</div>
+    <div class="hc-grid">
+      <div>
+        <div class="hc-item"><div class="hc-dot"></div><span>NRCS CPA-52 environmental evaluation worksheet required for every practice</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>FSA CCC-901 form filing and USDA Farm Services Agency enrollment</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>ESA Section 7 consultation with US Fish &amp; Wildlife Service</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>Pre-practice forest inventory data collection, formatting &amp; submission</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>Post-practice inventory data collection, formatting &amp; submission</span></div>
+      </div>
+      <div>
+        <div class="hc-item"><div class="hc-dot"></div><span>MMRV setup, ongoing reporting &amp; independent third-party verification</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>Harvest data reporting by species, volume &amp; product class</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>Marketing data reporting on where harvested wood was sold</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>Collaborative project design with NEFF staff before work can begin</span></div>
+        <div class="hc-item"><div class="hc-dot"></div><span>AMP is a reimbursement program — full contractor cost fronted by NEFF first</span></div>
+      </div>
+    </div>
+    <div class="hc-note">
+      ESA bat cutting blackouts: June–July prohibited in ME &nbsp;·&nbsp; March–September prohibited in NH, MA &amp; VT — severely limits the primary field season for AMP-funded work.
+    </div>
+  </div>
+
+  <div class="footnote">FTE = $107K total cost (salary + benefits + equipment). AMP cost shown is 30% of contractor rate only — hidden costs above are additional and not reflected in the numbers.</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const FTE_COST = 107000;
+  let chart;
+
+  const fmt   = n => '$' + Math.round(n).toLocaleString();
+  const fmtAc = n => '$' + Math.round(n) + '/ac';
+
+  function calc(rate, acres) {
+    return {
+      ftePer:    FTE_COST / acres,
+      ampPer:    rate * 0.30,
+      fullPer:   rate,
+      fteTotal:  FTE_COST,
+      ampTotal:  rate * 0.30 * acres,
+      fullTotal: rate * acres,
+    };
+  }
+
+  function update() {
+    const rate  = parseInt(document.getElementById('rateSlider').value);
+    const acres = parseInt(document.getElementById('acSlider').value);
+    document.getElementById('rateVal').textContent = '$' + rate + '/ac';
+    document.getElementById('acVal').textContent   = acres + ' ac/yr';
+
+    const r    = calc(rate, acres);
+    const diff = r.ftePer - r.ampPer;
+    const tied = Math.abs(diff) < 5;
+    const fteWins = !tied && diff < 0;
+    const ampWins = !tied && diff > 0;
+
+    document.getElementById('metrics').innerHTML = `
+      <div class="metric">
+        <div class="mlabel">FTE cost/ac</div>
+        <div class="mval">${fmtAc(r.ftePer)}</div>
+        <div class="msub">${fmt(FTE_COST)} fixed/yr</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">AMP cost/ac (30% only)</div>
+        <div class="mval">${fmtAc(r.ampPer)}</div>
+        <div class="msub">excl. hidden costs</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Contractor (no AMP)</div>
+        <div class="mval">${fmtAc(r.fullPer)}</div>
+        <div class="msub">${fmt(r.fullTotal)} total</div>
+      </div>
+    `;
+
+    const banner = document.getElementById('banner');
+    if (tied) {
+      banner.style.cssText = 'background:#f5f4f0;color:#444441;border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;font-weight:500;font-size:13px;';
+      banner.textContent = 'FTE and AMP are within $5/ac at these inputs — essentially a wash on paper. Factor in hidden costs.';
+    } else if (fteWins) {
+      banner.style.cssText = 'background:#eaf3de;color:#27500a;border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;font-weight:500;font-size:13px;';
+      banner.textContent = `FTE wins on sticker price — ${fmtAc(Math.abs(diff))} cheaper than AMP's 30% share, before any hidden costs.`;
+    } else {
+      banner.style.cssText = 'background:#e6f1fb;color:#0c447c;border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;font-weight:500;font-size:13px;';
+      banner.textContent = `AMP's 30% share is ${fmtAc(Math.abs(diff))} cheaper than the FTE on paper — but add hidden costs and that gap narrows fast.`;
+    }
+
+    document.getElementById('tblBody').innerHTML = `
+      <tr>
+        <td class="hl">FTE (hire in-house)</td>
+        <td class="${fteWins ? 'win' : ''}">${fmtAc(r.ftePer)}</td>
+        <td>${fmt(r.fteTotal)}</td>
+        <td class="dim" style="font-size:12px">None</td>
+        <td class="${fteWins ? 'win' : ''}">${fteWins ? 'Cheaper' : ampWins ? fmtAc(Math.abs(diff)) + ' more' : 'Tied'}</td>
+      </tr>
+      <tr>
+        <td class="hl">AMP (30% share)</td>
+        <td class="${ampWins ? 'win' : ''}">${fmtAc(r.ampPer)}</td>
+        <td>${fmt(r.ampTotal)} <span class="dim" style="font-size:11px">+ hidden</span></td>
+        <td style="color:#a32d2d;font-size:12px">Reimbursement · ESA blackouts · MMRV · CPA-52 · FSA · reporting</td>
+        <td class="${ampWins ? 'win' : ''}">${ampWins ? 'Cheaper on paper' : fteWins ? fmtAc(Math.abs(diff)) + ' more' : 'Tied'}</td>
+      </tr>
+      <tr>
+        <td class="hl">Contractor (no AMP)</td>
+        <td class="dim">${fmtAc(r.fullPer)}</td>
+        <td class="dim">${fmt(r.fullTotal)}</td>
+        <td class="dim" style="font-size:12px">None</td>
+        <td class="dim">Most expensive</td>
+      </tr>
+    `;
+
+    if (chart) {
+      chart.data.datasets[0].data = [Math.round(r.ftePer), Math.round(r.ampPer), Math.round(r.fullPer)];
+      chart.data.datasets[0].backgroundColor = [
+        fteWins ? '#639922' : '#b4b2a9',
+        ampWins ? '#378add' : '#b4b2a9',
+        '#b4b2a9',
+      ];
+      chart.update();
+    }
+  }
+
+  document.getElementById('rateSlider').addEventListener('input', update);
+  document.getElementById('acSlider').addEventListener('input', update);
+
+  window.addEventListener('load', () => {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['FTE', 'AMP (30% only)', 'Contractor (no AMP)'],
+        datasets: [{
+          data: [238, 195, 650],
+          backgroundColor: ['#b4b2a9', '#378add', '#b4b2a9'],
+          borderRadius: 4,
+          barThickness: 52,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ' $' + Math.round(ctx.raw) + '/ac' } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#888780', font: { size: 12 } } },
+          y: {
+            grid: { color: '#e5e2da' },
+            ticks: { color: '#888780', font: { size: 12 }, callback: v => '$' + v },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    update();
+  });
+</script>
+</body>
+</html>
